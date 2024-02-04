@@ -1,0 +1,26 @@
+{
+  "type": "module",
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Swipify backend",
+  "main": "server.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/christiandsol/Swipify.git"
+  },
+  "author": "Christian Solano",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/christiandsol/Swipify/issues"
+  },
+  "homepage": "https://github.com/christiandsol/Swipify#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2"
+  }
+}
