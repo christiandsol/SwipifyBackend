@@ -23,16 +23,12 @@ export const control_login_authorize =  function(req, res) {
       redirect_uri: REDIRECT_URI,
       state: state
     });
-  console.log(redirectUrl);
-  res.json({
-      response_type: 'code',
-      cilent_id: CLIENT_ID,
-      scope: scope,
-      redirect_uri: REDIRECT_URI,
-      state: state
-  })
-  res.redirect(redirectUrl);
+    console.log(CLIENT_ID);
+    console.log(REDIRECT_URI);
+    console.log(redirectUrl);
+    res.send(redirectUrl);
 };
+
 
 export const control_login_callback = async function(req, res) {
     const code = req.query.code || null;
@@ -105,6 +101,13 @@ export const obtain_tokens = async (req, res) => {
         USER_ID= profile.id;
         res.redirect('localhost:3000');
     }
+}
+
+export const get_token = async (req,res) => {
+    console.log('Access token: ', ACCESS_TOKEN);
+    res.json({
+        access_token: ACCESS_TOKEN
+    });
 }
 
 export const create_playlist= async (req, res) => {
