@@ -12,7 +12,8 @@ const CLIENT_ID = process.env.CLIENT_ID;
 let ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 let REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 let USER_ID = process.env.USER_ID;
-export const control_login_authorize =  function(req, res) {
+
+export const control_login_authorize = function(req, res) {
   const state = '798873302492668522416472228';
   var scope = 'user-read-private user-read-email streaming playlist-modify-private playlist-modify-public';
   var redirectUrl = 'https://accounts.spotify.com/authorize?' +
@@ -123,3 +124,25 @@ export const create_playlist= async (req, res) => {
     console.log('Response: ', response.data);
     res.send('New playlist created');
 } 
+
+export const get_user_playlists = async (req, res) => {
+
+    console.log('Access Token', ACCESS_TOKEN)
+
+    const response = await axios.get('https://api.spotify.com/v1/me/playlists', {
+        headers: {
+            'Authorization': 'Bearer ' + ACCESS_TOKEN
+        }});
+    console.log('Playlists Output: ', response.data.items[0].name)
+
+    const playlistIDS = response.data.items.map(({ id, name }) => ({ id, name }))
+
+    const tracks_response = await axios.get(response.data.items[0].tracks.href, {
+        headers: {
+            'Authorization': 'Bearer ' + ACCESS_TOKEN
+        }});
+    
+    res.send(' ' + tracks_response.data.items.map(({track}) => '<br/> '+ track.name + ' <br/> and id is: ' + track.id))
+    // res.send('list of user playlists:' + response.data.items.map(({name, id, tracks}) => '<br/>name is: ' + name + ' and id is: ' + id + ' trackslink?: ' + tracks.href ))
+}
+
