@@ -23,10 +23,11 @@ app.get('/login', authenticate.control_login_authorize);
 
 app.get('/callback', authenticate.control_login_callback);
 
-//add a new playlist
 app.get('/new_playlist', authenticate.create_playlist);
 
 app.get('/get_playlists', authenticate.get_user_playlists);
+
+app.get('/tracks', authenticate.tracks_page);
 
 
 app.get('/auth/token', authenticate.get_token);

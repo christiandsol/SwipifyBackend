@@ -12,10 +12,11 @@ const CLIENT_ID = process.env.CLIENT_ID;
 let ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 let REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 let USER_ID = process.env.USER_ID;
+let PLAYLIST_DATA;
 
 export const control_login_authorize = function(req, res) {
   const state = '798873302492668522416472228';
-  var scope = 'user-read-private user-read-email streaming playlist-modify-private playlist-modify-public';
+  var scope = 'user-read-private user-read-email streaming playlist-modify-private playlist-modify-public playlist-read-private';
   var redirectUrl = 'https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -27,7 +28,7 @@ export const control_login_authorize = function(req, res) {
     console.log(CLIENT_ID);
     console.log(REDIRECT_URI);
     console.log(redirectUrl);
-    res.send(redirectUrl);
+    res.redirect(redirectUrl);
 };
 
 
@@ -41,7 +42,7 @@ export const control_login_callback = async function(req, res) {
         console.log('Error: ', error);
         res.send('There was an error during the authentication');
     } else {
-        console.log('Code: ', code);
+        // console.log('Code: ', code);
         const response = await axios.post('https://accounts.spotify.com/api/token', querystring.stringify({
             code: code,
             redirect_uri: REDIRECT_URI,
@@ -52,13 +53,12 @@ export const control_login_callback = async function(req, res) {
                 'Authorization': 'Basic ' + (new Buffer(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64'))
             }
         });
-        console.log('Response: ', response.data);
         ACCESS_TOKEN = response.data.access_token;
-        console.log('Access token: ', ACCESS_TOKEN);
         REFRESH_TOKEN= response.data.refresh_token;
         const profile = await getProfile(ACCESS_TOKEN);
         USER_ID= profile.id;
-        res.redirect('localhost:3000');
+        await get_playlists();
+        res.redirect('localhost:3000/get_playlists');
     }
 };
 
@@ -70,7 +70,6 @@ export async function getProfile(access_token) {
     });
     console.log('Profile: ', response.data);
     return response.data;
-
 }
 
 export const obtain_tokens = async (req, res) => {
@@ -126,23 +125,54 @@ export const create_playlist= async (req, res) => {
 } 
 
 export const get_user_playlists = async (req, res) => {
+    console.log('Playlists amount displayed, total: ', PLAYLIST_DATA.data.items.length, PLAYLIST_DATA.data.total);
 
-    console.log('Access Token', ACCESS_TOKEN)
-
-    const response = await axios.get('https://api.spotify.com/v1/me/playlists', {
-        headers: {
-            'Authorization': 'Bearer ' + ACCESS_TOKEN
-        }});
-    console.log('Playlists Output: ', response.data.items[0].name)
-
-    const playlistIDS = response.data.items.map(({ id, name }) => ({ id, name }))
-
-    const tracks_response = await axios.get(response.data.items[0].tracks.href, {
-        headers: {
-            'Authorization': 'Bearer ' + ACCESS_TOKEN
-        }});
-    
-    res.send(' ' + tracks_response.data.items.map(({track}) => '<br/> '+ track.name + ' <br/> and id is: ' + track.id))
-    // res.send('list of user playlists:' + response.data.items.map(({name, id, tracks}) => '<br/>name is: ' + name + ' and id is: ' + id + ' trackslink?: ' + tracks.href ))
+    try{
+        res.send(' ' + PLAYLIST_DATA.data.items.map(({ id, name, tracks }) => ('<br/>id: ' + id + '  ||   num tracks:' + tracks.total + '  ||   name: ' + name )));
+    }
+    catch{
+        res.send('no playlists?')
+    }
 }
 
+export const tracks_page = async (req, res) => {
+
+    try{
+        let playlist_id = PLAYLIST_DATA.data.items[0].id;
+        let tracks = await get_tracks_from_playlist(playlist_id);
+
+        res.send('first playlist data:' + tracks.data.items.map(({track}) => '<br/>name is: ' + track.name + '     ||||||album is: ' + track.album.name));
+    } catch {
+        res.send('no playlists?')
+    }
+}
+
+async function get_playlists() {
+    //GETS THE MAX NUMBER OF PLAYLISTS WHICH IS 50. IF WE WANT TO GET ALL THIS MUST BE UPDATED. 
+    const response = await axios.get('https://api.spotify.com/v1/me/playlists', {
+        params: {
+            'limit': 50,
+            'offset': 0
+          },
+        headers: {
+            'Authorization': 'Bearer ' + ACCESS_TOKEN
+    }});
+
+    PLAYLIST_DATA = response;    
+    return response.total;
+}
+
+async function get_tracks_from_playlist(playlist_id){
+
+    const response = await axios.get('https://api.spotify.com/v1/playlists/' + playlist_id + '/tracks', {
+        params: {
+            'market': 'US',
+            'fields': 'total,items(track(album(name), name))'
+        },
+        headers: {
+            'Authorization': 'Bearer ' + ACCESS_TOKEN
+        }
+    });
+
+    return response;
+}
