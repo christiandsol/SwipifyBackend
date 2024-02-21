@@ -138,7 +138,7 @@ export const get_user_playlists = async (req, res) => {
 export const tracks_page = async (req, res) => {
 
     try{
-        let playlist_id = PLAYLIST_DATA.data.items[0].id;
+        let playlist_id = PLAYLIST_DATA[0].id;
         let tracks = await get_tracks_from_playlist(playlist_id);
 
         res.send('first playlist data:' + tracks.data.items.map(({track}) => '<br/>name is: ' + track.name + '     ||||||album is: ' + track.album.name));
