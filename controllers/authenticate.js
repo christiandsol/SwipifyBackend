@@ -58,6 +58,7 @@ export const control_login_callback = async function(req, res) {
         const profile = await getProfile(ACCESS_TOKEN);
         USER_ID= profile.id;
         await get_playlists();
+        await remove_track_from_playlist();
         res.redirect('localhost:3000/get_playlists');
     }
 };
@@ -128,7 +129,7 @@ export const get_user_playlists = async (req, res) => {
     console.log('Playlists amount displayed, total: ', PLAYLIST_DATA.length);
 
     try{
-        res.send(' ' + PLAYLIST_DATA.map(({ id, name, tracks }) => ('<br/>id: ' + id + '  ||   num tracks:' + tracks.total + '  ||   name: ' + name )));
+        res.send(' ' + PLAYLIST_DATA.map(({ id, name, tracks, snapshot_id }) => ('<br/>id: ' + id + '  ||   num tracks:' + tracks.total + '  ||   name: ' + name + '  ||   snapshot_id: ' + snapshot_id )));
     }
     catch{
         res.send('no playlists?')
@@ -141,7 +142,7 @@ export const tracks_page = async (req, res) => {
         let playlist_id = PLAYLIST_DATA[0].id;
         let tracks = await get_tracks_from_playlist(playlist_id);
 
-        res.send('first playlist data:' + tracks.data.items.map(({track}) => '<br/>name is: ' + track.name + '     ||||||album is: ' + track.album.name));
+        res.send('first playlist data:' + tracks.map(({track}) => '<br/>name is: ' + track.name + '     ||||||album is: ' + track.album.name + '     ||||||track_id is: ' + track.id));
     } catch {
         res.send('no playlists?')
     }
@@ -150,10 +151,10 @@ export const tracks_page = async (req, res) => {
 async function get_playlists() {
     //GETS THE MAX NUMBER OF PLAYLISTS WHICH IS 50. IF WE WANT TO GET ALL THIS MUST BE UPDATED. 
     let playlists = [];
-    let responseURL = 'https://api.spotify.com/v1/me/playlists';
+    let queryString = 'https://api.spotify.com/v1/me/playlists';
 
-    while (responseURL){
-        const response = await axios.get(responseURL, {
+    while (queryString){
+        const response = await axios.get(queryString, {
             params: {
                 'limit': 50,
                 'offset': 0
@@ -163,7 +164,7 @@ async function get_playlists() {
         }});
 
         playlists = playlists.concat(response.data.items);
-        responseURL = response.data.next;
+        queryString = response.data.next;
     }
 
     const user_owned_playlists = playlists.map((playlist) => {
@@ -176,15 +177,49 @@ async function get_playlists() {
 
 async function get_tracks_from_playlist(playlist_id){
 
-    const response = await axios.get('https://api.spotify.com/v1/playlists/' + playlist_id + '/tracks', {
-        params: {
-            'market': 'US',
-            'fields': 'total,items(track(album(name), name))'
-        },
-        headers: {
-            'Authorization': 'Bearer ' + ACCESS_TOKEN
-        }
-    });
+    let tracks = [];
+    let queryString = 'https://api.spotify.com/v1/playlists/' + playlist_id + '/tracks';
 
-    return response;
+    while(queryString){
+        const response = await axios.get(queryString, {
+            params: {
+                'market': 'US',
+            },
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            }
+        });
+
+        tracks = tracks.concat(response.data.items);
+        queryString = response.data.next;
+    }
+
+    return tracks;
+}
+
+async function remove_track_from_playlist(playlist_id, trackids_to_remove){
+
+    trackids_to_remove = ['2FDTHlrBguDzQkp7PVj16Q', '0GAyuCo975IHGxxiLKDufB'];
+    playlist_id = '60uTaRX0ZDG5tSW3PCYBVL';
+
+    let tracks_to_remove = trackids_to_remove.map((track_id) => ({"uri" : "spotify:track:" + track_id}));
+
+
+    const playlist = PLAYLIST_DATA.find(obj => obj.id === playlist_id);
+
+    let snapshot_id = playlist.snapshot_id;
+
+    const response = await axios.delete('https://api.spotify.com/v1/playlists/' + playlist_id + '/tracks', {
+        headers: {
+            'Authorization': 'Bearer ' + ACCESS_TOKEN,
+            'Content-Type': 'application/json'
+        }, data: {
+            'tracks': tracks_to_remove,
+            'snapshot_id': snapshot_id
+    }});
+
+    console.log(response);
+
+    await get_playlists();  //call get playlists again to update playlist data
+    
 }
