@@ -125,10 +125,10 @@ export const create_playlist= async (req, res) => {
 } 
 
 export const get_user_playlists = async (req, res) => {
-    console.log('Playlists amount displayed, total: ', PLAYLIST_DATA.data.items.length, PLAYLIST_DATA.data.total);
+    console.log('Playlists amount displayed, total: ', PLAYLIST_DATA.length);
 
     try{
-        res.send(' ' + PLAYLIST_DATA.data.items.map(({ id, name, tracks }) => ('<br/>id: ' + id + '  ||   num tracks:' + tracks.total + '  ||   name: ' + name )));
+        res.send(' ' + PLAYLIST_DATA.map(({ id, name, tracks }) => ('<br/>id: ' + id + '  ||   num tracks:' + tracks.total + '  ||   name: ' + name )));
     }
     catch{
         res.send('no playlists?')
@@ -149,17 +149,29 @@ export const tracks_page = async (req, res) => {
 
 async function get_playlists() {
     //GETS THE MAX NUMBER OF PLAYLISTS WHICH IS 50. IF WE WANT TO GET ALL THIS MUST BE UPDATED. 
-    const response = await axios.get('https://api.spotify.com/v1/me/playlists', {
-        params: {
-            'limit': 50,
-            'offset': 0
-          },
-        headers: {
-            'Authorization': 'Bearer ' + ACCESS_TOKEN
-    }});
+    let playlists = [];
+    let responseURL = 'https://api.spotify.com/v1/me/playlists';
 
-    PLAYLIST_DATA = response;    
-    return response.total;
+    while (responseURL){
+        const response = await axios.get(responseURL, {
+            params: {
+                'limit': 50,
+                'offset': 0
+            },
+            headers: { 
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+        }});
+
+        playlists = playlists.concat(response.data.items);
+        responseURL = response.data.next;
+    }
+
+    const user_owned_playlists = playlists.map((playlist) => {
+        return playlist.owner.id == USER_ID ? playlist : null;
+    });
+
+    PLAYLIST_DATA = user_owned_playlists.filter(playlist => playlist);  
+    return user_owned_playlists.length;
 }
 
 async function get_tracks_from_playlist(playlist_id){
