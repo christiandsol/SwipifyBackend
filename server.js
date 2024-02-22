@@ -29,6 +29,8 @@ app.get('/get_playlists', authenticate.get_user_playlists);
 
 app.get('/tracks', authenticate.tracks_page);
 
+app.get('/test', authenticate.test);
+
 
 app.get('/auth/token', authenticate.get_token);
 app.listen(8000, () => {

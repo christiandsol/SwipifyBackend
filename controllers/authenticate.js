@@ -58,8 +58,7 @@ export const control_login_callback = async function(req, res) {
         const profile = await getProfile(ACCESS_TOKEN);
         USER_ID= profile.id;
         await get_playlists();
-        await remove_track_from_playlist();
-        res.redirect('localhost:3000/get_playlists');
+        res.redirect('localhost:8000/get_playlists');
     }
 };
 
@@ -148,6 +147,23 @@ export const tracks_page = async (req, res) => {
     }
 }
 
+export const test = async (req, res) => {
+    try{
+        // let x = await get_tracks_and_artists_from_playlist('0A0X9EeB29iwpAd7Pat5Ae');
+        let tracks = await get_tracks_from_playlist('0A0X9EeB29iwpAd7Pat5Ae');
+        sort_tracks_by_artist(tracks, null);
+        res.send('test complete');
+    }catch (error){
+        res.send(error);
+        console.log(error);
+    }
+}
+
+/*
+BEGIN API ACCESS FUNCTIONS
+*/
+
+
 async function get_playlists() {
     //GETS THE MAX NUMBER OF PLAYLISTS WHICH IS 50. IF WE WANT TO GET ALL THIS MUST BE UPDATED. 
     let playlists = [];
@@ -167,12 +183,8 @@ async function get_playlists() {
         queryString = response.data.next;
     }
 
-    const user_owned_playlists = playlists.map((playlist) => {
-        return playlist.owner.id == USER_ID ? playlist : null;
-    });
-
-    PLAYLIST_DATA = user_owned_playlists.filter(playlist => playlist);  
-    return user_owned_playlists.length;
+    PLAYLIST_DATA =  playlists.filter((playlist) => playlist.owner.id == USER_ID);
+    return PLAYLIST_DATA.length;
 }
 
 async function get_tracks_from_playlist(playlist_id){
@@ -197,7 +209,32 @@ async function get_tracks_from_playlist(playlist_id){
     return tracks;
 }
 
-async function remove_track_from_playlist(playlist_id, trackids_to_remove){
+async function get_tracks_and_artists_from_playlist(playlist_id){
+    let tracks = await get_tracks_from_playlist(playlist_id);
+    let artists = tracks.map(({track}) => track.artists);
+    artists = [].concat(...artists);
+    let artist_ids = artists.map((artist) => artist.id);
+
+    let unique_artists = artists.filter((artist, index) => artist_ids.slice(0,index).includes(artist.id));
+
+    // let unique_artist_ids = new Set();
+    // artists.map((artist) => unique_artist_ids.add(artist.id));
+
+    // let unique_artists = artists.filter((artist) => { let x = unique_artist_ids.has(artist.id);
+    //     unique_artist_ids.add(artist.id);
+    //     return x;
+    // })
+    
+
+    // // console.log(artists);
+    // console.log(unique_artist_ids);
+    // console.log(artists.map((artist) => artist.name));
+    console.log(unique_artists.map((artist) => artist.name));
+
+
+}
+
+async function remove_tracks_from_playlist(playlist_id, trackids_to_remove){
 
     trackids_to_remove = ['2FDTHlrBguDzQkp7PVj16Q', '0GAyuCo975IHGxxiLKDufB'];
     playlist_id = '60uTaRX0ZDG5tSW3PCYBVL';
@@ -207,19 +244,24 @@ async function remove_track_from_playlist(playlist_id, trackids_to_remove){
 
     const playlist = PLAYLIST_DATA.find(obj => obj.id === playlist_id);
 
-    let snapshot_id = playlist.snapshot_id;
-
     const response = await axios.delete('https://api.spotify.com/v1/playlists/' + playlist_id + '/tracks', {
         headers: {
             'Authorization': 'Bearer ' + ACCESS_TOKEN,
             'Content-Type': 'application/json'
         }, data: {
             'tracks': tracks_to_remove,
-            'snapshot_id': snapshot_id
+            'snapshot_id': playlist.snapshot_id
     }});
 
     console.log(response);
 
     await get_playlists();  //call get playlists again to update playlist data
-    
+}
+
+function sort_tracks_by_artist(tracks, artist_id){
+    //- for each track, make an object that has the track and each of the artist ids in an array
+    //- sort tracks, if a has artist return 1 and if b has artist return -1, if they both do or neither does return 0. 
+    let artist_ids_and_tracks = tracks.map((track) => track.artists.map((artist) => artist.id).concat(track));
+    console.log(artist_ids_and_tracks);
+
 }
