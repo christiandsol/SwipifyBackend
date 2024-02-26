@@ -6,8 +6,6 @@ dotenv.config()
 //initialization
 const REDIRECT_URI = process.env.REDIRECT_URI; 
 const CLIENT_SECRET = process.env.CLIENT_SECRET;  
-const BASE_URL = process.env.BASE_URL; 
-const AUTH_URL = process.env.AUTH_URL; 
 const CLIENT_ID = process.env.CLIENT_ID; 
 let ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 let REFRESH_TOKEN = process.env.REFRESH_TOKEN;
@@ -28,7 +26,7 @@ export const control_login_authorize = function(req, res) {
     console.log(CLIENT_ID);
     console.log(REDIRECT_URI);
     console.log(redirectUrl);
-    res.redirect(redirectUrl);
+    res.redirect(redirectUrl);  
 };
 
 
@@ -76,7 +74,7 @@ export const obtain_tokens = async (req, res) => {
     const code = req.query.code || null;
     const state = req.query.state || null;
     const storedState = req.query.state || null;
-     const error = req.query.error || null;
+    const error = req.query.error || null;
     
     if (error) {
         console.log('Error: ', error);
@@ -111,6 +109,8 @@ export const get_token = async (req,res) => {
 }
 
 export const create_playlist= async (req, res) => {
+    // PROB NOT NEEDED
+
     const response = await axios.post(`https://api.spotify.com/v1/users/${USER_ID}/playlists`, {
         name: 'New Playlist',
         public: false
@@ -131,7 +131,7 @@ export const get_user_playlists = async (req, res) => {
         res.send(' ' + PLAYLIST_DATA.map(({ id, name, tracks, snapshot_id }) => ('<br/>id: ' + id + '  ||   num tracks:' + tracks.total + '  ||   name: ' + name + '  ||   snapshot_id: ' + snapshot_id )));
     }
     catch{
-        res.send('no playlists?')
+        res.send('no playlists? or not logged in')
     }
 }
 
@@ -143,7 +143,7 @@ export const tracks_page = async (req, res) => {
 
         res.send('first playlist data:' + tracks.map(({track}) => '<br/>name is: ' + track.name + '     ||||||album is: ' + track.album.name + '     ||||||track_id is: ' + track.id));
     } catch {
-        res.send('no playlists?')
+        res.send('no playlists? or not logged in')
     }
 }
 
@@ -165,7 +165,9 @@ BEGIN API ACCESS FUNCTIONS
 
 
 async function get_playlists() {
-    //GETS THE MAX NUMBER OF PLAYLISTS WHICH IS 50. IF WE WANT TO GET ALL THIS MUST BE UPDATED. 
+    // Returns a full list of playlist objects owned by the user, and sets global variable PLAYLIST_DATA.
+    
+
     let playlists = [];
     let queryString = 'https://api.spotify.com/v1/me/playlists';
 
@@ -177,17 +179,19 @@ async function get_playlists() {
             },
             headers: { 
                 'Authorization': 'Bearer ' + ACCESS_TOKEN
-        }});
+            }});
 
         playlists = playlists.concat(response.data.items);
         queryString = response.data.next;
     }
 
     PLAYLIST_DATA =  playlists.filter((playlist) => playlist.owner.id == USER_ID);
-    return PLAYLIST_DATA.length;
+    return PLAYLIST_DATA;
 }
 
 async function get_tracks_from_playlist(playlist_id){
+    // Returns an array of all track objects for a playlist, containing all their data, from the playlist given. 
+    // Intended to be called by get_tracks_and_artists_from_playlist.
 
     let tracks = [];
     let queryString = 'https://api.spotify.com/v1/playlists/' + playlist_id + '/tracks';
@@ -210,6 +214,12 @@ async function get_tracks_from_playlist(playlist_id){
 }
 
 async function get_tracks_and_artists_from_playlist(playlist_id){
+    // Function to return an object with 
+    // 1. a list of tracks (track id, name, artist id, and album name as a minimum) and 
+    // 2. a list of object artists that has ids and name at a minimum
+    // 3. This function is intended to be called from the front end to populate the swiping page with tracks, and show a list of the artists to sort by
+
+
     let tracks = await get_tracks_from_playlist(playlist_id);
     let artists = tracks.map(({track}) => track.artists);
     artists = [].concat(...artists);
@@ -235,9 +245,11 @@ async function get_tracks_and_artists_from_playlist(playlist_id){
 }
 
 async function remove_tracks_from_playlist(playlist_id, trackids_to_remove){
-
-    trackids_to_remove = ['2FDTHlrBguDzQkp7PVj16Q', '0GAyuCo975IHGxxiLKDufB'];
-    playlist_id = '60uTaRX0ZDG5tSW3PCYBVL';
+    // Takes in an array of track_ids, and the playlist_id the track is meant to be removed from. 
+    // Should be called with a list of track_ids from the front end, once the user confirms removal of the tracks. 
+    // EX:
+    // trackids_to_remove = ['2FDTHlrBguDzQkp7PVj16Q', '0GAyuCo975IHGxxiLKDufB'];
+    // playlist_id = '60uTaRX0ZDG5tSW3PCYBVL';
 
     let tracks_to_remove = trackids_to_remove.map((track_id) => ({"uri" : "spotify:track:" + track_id}));
 
@@ -259,6 +271,10 @@ async function remove_tracks_from_playlist(playlist_id, trackids_to_remove){
 }
 
 function sort_tracks_by_artist(tracks, artist_id){
+    // Given an array of track objects, puts all songs with artist of artist_id at the beginning of the array.
+    // Returns the reordered list of tracks. 
+
+    
     //- for each track, make an object that has the track and each of the artist ids in an array
     //- sort tracks, if a has artist return 1 and if b has artist return -1, if they both do or neither does return 0. 
     let artist_ids_and_tracks = tracks.map((track) => track.artists.map((artist) => artist.id).concat(track));
