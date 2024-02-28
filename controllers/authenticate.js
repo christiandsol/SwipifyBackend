@@ -23,9 +23,6 @@ export const control_login_authorize = function(req, res) {
       redirect_uri: REDIRECT_URI,
       state: state
     });
-    console.log(CLIENT_ID);
-    console.log(REDIRECT_URI);
-    console.log(redirectUrl);
     res.redirect(redirectUrl);  
 };
 
@@ -56,7 +53,7 @@ export const control_login_callback = async function(req, res) {
         const profile = await getProfile(ACCESS_TOKEN);
         USER_ID= profile.id;
         await get_playlists();
-        res.redirect('localhost:3000');
+        res.redirect('http://localhost:3000');
     }
 };
 
