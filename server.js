@@ -23,11 +23,11 @@ app.get('/login', authenticate.control_login_authorize);
 
 app.get('/callback', authenticate.control_login_callback);
 
-app.get('/new_playlist', authenticate.create_playlist);
+app.get('/new_playlist', authenticate.new_playlist);
 
-app.get('/get_playlists', authenticate.get_user_playlists);
+app.get('/playlists', authenticate.playlists);
 
-app.get('/tracks', authenticate.tracks_page);
+app.get('/tracks', authenticate.tracks);
 
 app.get('/test', authenticate.test);
 
