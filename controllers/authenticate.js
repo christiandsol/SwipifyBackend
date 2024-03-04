@@ -345,7 +345,7 @@ function sort_tracks_by_artist(tracks, artist_id){
     let frontmost_index = 0
     for(let i = 0; i < tracks.length; i++){
         if(artist_ids[i].includes(artist_id)){
-            temp = tracks[frontmost_index]
+            let temp = tracks[frontmost_index]
             tracks[frontmost_index] = tracks[i]
             tracks[i] = temp
             frontmost_index++
@@ -364,7 +364,7 @@ function sort_tracks_by_album(tracks, album_name){
     let frontmost_index = 0
     for(let i = 0; i < tracks.length; i++){
         if(album_name === album_names[i]){
-            temp = tracks[frontmost_index]
+            let temp = tracks[frontmost_index]
             tracks[frontmost_index] = tracks[i]
             tracks[i] = temp
             frontmost_index++
