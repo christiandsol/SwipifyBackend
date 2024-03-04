@@ -270,14 +270,105 @@ async function remove_tracks_from_playlist(playlist_id, trackids_to_remove){
     await get_playlists();  //call get playlists again to update playlist data
 }
 
+/* Track Object:
+
+    {
+  added_at: '2022-04-11T01:37:02Z',
+  added_by: {
+    external_urls: { spotify: 'https://open.spotify.com/user/justinrm16' },
+    href: 'https://api.spotify.com/v1/users/justinrm16',
+    id: 'justinrm16',
+    type: 'user',
+    uri: 'spotify:user:justinrm16'
+  },
+  is_local: false,
+  primary_color: null,
+  track: {
+    preview_url: 'https://p.scdn.co/mp3-preview/3dd55d0ccc147f9a655048af71275a345ad54c7f?cid=002f6e5dac5345d1be58e8aba4fb585f',
+    is_playable: true,
+    explicit: true,
+    type: 'track',
+    episode: false,
+    track: true,
+    album: {
+      is_playable: true,
+      type: 'album',
+      album_type: 'album',
+      href: 'https://api.spotify.com/v1/albums/0zicd2mBV8HTzSubByj4vP',
+      id: '0zicd2mBV8HTzSubByj4vP',
+      images: [Array],
+      name: 'Luv Is Rage 2 (Deluxe)',
+      release_date: '2017-11-17',
+      release_date_precision: 'day',
+      uri: 'spotify:album:0zicd2mBV8HTzSubByj4vP',
+      artists: [Array],
+      external_urls: [Object],
+      total_tracks: 20
+    },
+    artists: [ [Object] ],
+    disc_number: 1,
+    track_number: 20,
+    duration_ms: 220586,
+    external_ids: { isrc: 'USAT21704166' },
+    external_urls: {
+      spotify: 'https://open.spotify.com/track/0uxSUdBrJy9Un0EYoBowng'
+    },
+    href: 'https://api.spotify.com/v1/tracks/0uxSUdBrJy9Un0EYoBowng',
+    id: '0uxSUdBrJy9Un0EYoBowng',
+    name: '20 Min',
+    popularity: 85,
+    uri: 'spotify:track:0uxSUdBrJy9Un0EYoBowng',
+    is_local: false
+  },
+  video_thumbnail: { url: null }
+}
+
+
+*/
+
 function sort_tracks_by_artist(tracks, artist_id){
     // Given an array of track objects, puts all songs with artist of artist_id at the beginning of the array.
     // Returns the reordered list of tracks. 
 
-    
-    //- for each track, make an object that has the track and each of the artist ids in an array
-    //- sort tracks, if a has artist return 1 and if b has artist return -1, if they both do or neither does return 0. 
-    let artist_ids_and_tracks = tracks.map((track) => track.artists.map((artist) => artist.id).concat(track));
-    console.log(artist_ids_and_tracks);
+    /* Implementation: say tracks 4, 7, and 18 have the artist
+       tracks[0] <-> tracks[4], tracks[1] <-> tracks[7], tracks[2] <-> tracks[18]
+    */
 
+    let artists = tracks.map(({track}) => track.artists);
+    let artist_ids = []
+    for(let i = 0; i < artists.length; i++){ //artists is nested array, map inner array's artists to their id's
+        let ids = artists[i].map((artist) => artist.id)
+        artist_ids.push(ids)
+    }
+    //artist_ids looks like [ [drakeid, jcoleid], [travis scottid, dababyid, ] ] for tracks 0 and 1
+
+    let frontmost_index = 0
+    for(let i = 0; i < tracks.length; i++){
+        if(artists[i].includes(artist_id)){
+            temp = tracks[frontmost_index]
+            tracks[frontmost_index] = tracks[i]
+            tracks[i] = temp
+            frontmost_index++
+        }
+    }
+    return tracks
+}
+
+function sort_tracks_by_album(tracks, album_name){
+    //same as sort_tracks_by_artist, but for an album name
+    //each track belongs to only one album, so even simpler function
+
+    let album_names = tracks.map(({track}) => track.album.name);
+    //album_names looks like [ Yeezus, Stoney (Deluxe) ] for tracks 0 and 1
+
+    let frontmost_index = 0
+    for(let i = 0; i < tracks.length; i++){
+        if(album_name === album_names[i]){
+            temp = tracks[frontmost_index]
+            tracks[frontmost_index] = tracks[i]
+            tracks[i] = temp
+            frontmost_index++
+        }
+    }
+    return tracks
 }
