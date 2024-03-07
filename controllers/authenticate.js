@@ -1,6 +1,7 @@
 import querystring from 'querystring';
 import axios from 'axios'
 import dotenv from 'dotenv'
+// import { Z_DEFAULT_COMPRESSION } from 'zlib';
 dotenv.config()
 
 //initialization
@@ -137,9 +138,10 @@ export const tracks = async (req, res) => {
     try{
         let playlist_id = req.query.playlist_id;
         let tracks = await get_tracks_from_playlist(playlist_id);
+        await get_tracks_and_artists_from_playlist(playlist_id);
         res.json(tracks);
-    } catch {
-        console.log('fail')
+    } catch (error){
+        console.log(error)
         res.send('no playlists? or not logged in')
     }
 }
@@ -220,25 +222,20 @@ async function get_tracks_and_artists_from_playlist(playlist_id){
     let tracks = await get_tracks_from_playlist(playlist_id);
     let artists = tracks.map(({track}) => track.artists);
     artists = [].concat(...artists);
-    let artist_ids = artists.map((artist) => artist.id);
 
-    let unique_artists = artists.filter((artist, index) => artist_ids.slice(0,index).includes(artist.id));
+    let seen_ids = [];
+    let unique_artists = []
 
-    // let unique_artist_ids = new Set();
-    // artists.map((artist) => unique_artist_ids.add(artist.id));
+    for (let i = 0; i < artists.length; i++){
+        let artist = artists[i];
+        if (!seen_ids.includes(artist.id)){
+            unique_artists.push(artist);
+            seen_ids.push(artist.id);
+        }
+    }
 
-    // let unique_artists = artists.filter((artist) => { let x = unique_artist_ids.has(artist.id);
-    //     unique_artist_ids.add(artist.id);
-    //     return x;
-    // })
-    
-
-    // // console.log(artists);
-    // console.log(unique_artist_ids);
-    // console.log(artists.map((artist) => artist.name));
-    console.log(unique_artists.map((artist) => artist.name));
-
-
+    // console.log(unique_artists.map((artist) => artist.name));
+    return {"tracks" : tracks, "artists" : unique_artists}
 }
 
 async function remove_tracks_from_playlist(playlist_id, trackids_to_remove){
