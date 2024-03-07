@@ -124,8 +124,9 @@ export const new_playlist= async (req, res) => {
 export const playlists = async (req, res) => {
 
     try{
-        console.log('Playlists amount displayed, total: ', PLAYLIST_DATA.length);
-        res.json(PLAYLIST_DATA)
+        let playlists = await get_playlists();
+        console.log('Playlists amount displayed, total: ', playlists.length);
+        res.json(playlists)
     }
     catch{
         res.send('no playlists? or not logged in')
