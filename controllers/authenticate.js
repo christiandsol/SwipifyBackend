@@ -23,9 +23,6 @@ export const control_login_authorize = function(req, res) {
       redirect_uri: REDIRECT_URI,
       state: state
     });
-    console.log(CLIENT_ID);
-    console.log(REDIRECT_URI);
-    console.log(redirectUrl);
     res.redirect(redirectUrl);  
 };
 
@@ -34,7 +31,7 @@ export const control_login_callback = async function(req, res) {
     const code = req.query.code || null;
     const state = req.query.state || null;
     const storedState = req.query.state || null;
-     const error = req.query.error || null;
+    const error = req.query.error || null;
     
     if (error) {
         console.log('Error: ', error);
@@ -56,7 +53,7 @@ export const control_login_callback = async function(req, res) {
         const profile = await getProfile(ACCESS_TOKEN);
         USER_ID= profile.id;
         await get_playlists();
-        res.redirect('localhost:8000/get_playlists');
+        res.redirect('http://localhost:3000');
     }
 };
 
@@ -108,7 +105,7 @@ export const get_token = async (req,res) => {
     });
 }
 
-export const create_playlist= async (req, res) => {
+export const new_playlist= async (req, res) => {
     // PROB NOT NEEDED
 
     const response = await axios.post(`https://api.spotify.com/v1/users/${USER_ID}/playlists`, {
@@ -124,25 +121,25 @@ export const create_playlist= async (req, res) => {
     res.send('New playlist created');
 } 
 
-export const get_user_playlists = async (req, res) => {
-    console.log('Playlists amount displayed, total: ', PLAYLIST_DATA.length);
+export const playlists = async (req, res) => {
 
     try{
-        res.send(' ' + PLAYLIST_DATA.map(({ id, name, tracks, snapshot_id }) => ('<br/>id: ' + id + '  ||   num tracks:' + tracks.total + '  ||   name: ' + name + '  ||   snapshot_id: ' + snapshot_id )));
+        console.log('Playlists amount displayed, total: ', PLAYLIST_DATA.length);
+        res.json(PLAYLIST_DATA)
     }
     catch{
         res.send('no playlists? or not logged in')
     }
 }
 
-export const tracks_page = async (req, res) => {
+export const tracks = async (req, res) => {
 
     try{
-        let playlist_id = PLAYLIST_DATA[0].id;
+        let playlist_id = req.query.playlist_id;
         let tracks = await get_tracks_from_playlist(playlist_id);
-
-        res.send('first playlist data:' + tracks.map(({track}) => '<br/>name is: ' + track.name + '     ||||||album is: ' + track.album.name + '     ||||||track_id is: ' + track.id));
+        res.json(tracks);
     } catch {
+        console.log('fail')
         res.send('no playlists? or not logged in')
     }
 }
