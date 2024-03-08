@@ -27,7 +27,7 @@ app.get('/new_playlist', authenticate.new_playlist);
 
 app.get('/playlists', authenticate.playlists);
 
-app.get('/tracks', authenticate.tracks);
+app.get('/tracks_and_artists', authenticate.tracks_and_artists);
 
 app.get('/test', authenticate.test);
 

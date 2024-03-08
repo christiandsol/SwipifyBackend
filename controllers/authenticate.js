@@ -133,13 +133,12 @@ export const playlists = async (req, res) => {
     }
 }
 
-export const tracks = async (req, res) => {
+export const tracks_and_artists = async (req, res) => {
 
     try{
         let playlist_id = req.query.playlist_id;
-        let tracks = await get_tracks_from_playlist(playlist_id);
-        await get_tracks_and_artists_from_playlist(playlist_id);
-        res.json(tracks);
+        let data = await get_tracks_and_artists_from_playlist(playlist_id);
+        res.json(data);
     } catch (error){
         console.log(error)
         res.send('no playlists? or not logged in')
