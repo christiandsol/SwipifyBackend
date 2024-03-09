@@ -133,11 +133,11 @@ export const playlists = async (req, res) => {
     }
 }
 
-export const tracks_and_artists = async (req, res) => {
+export const tracks = async (req, res) => {
 
     try{
         let playlist_id = req.query.playlist_id;
-        let data = await get_tracks_and_artists_from_playlist(playlist_id);
+        let data = await get_tracks_from_playlist(playlist_id);
         res.json(data);
     } catch (error){
         console.log(error)
@@ -219,22 +219,10 @@ async function get_tracks_and_artists_from_playlist(playlist_id){
 
 
     let tracks = await get_tracks_from_playlist(playlist_id);
-    let artists = tracks.map(({track}) => track.artists);
-    artists = [].concat(...artists);
-
-    let seen_ids = [];
-    let unique_artists = []
-
-    for (let i = 0; i < artists.length; i++){
-        let artist = artists[i];
-        if (!seen_ids.includes(artist.id)){
-            unique_artists.push(artist);
-            seen_ids.push(artist.id);
-        }
-    }
+    let artists = tracks.map(({track}) => track.artists); //artists[0] is a list of artist objects from tracks[0]
 
     // console.log(unique_artists.map((artist) => artist.name));
-    return {"tracks" : tracks, "artists" : unique_artists}
+    return {"tracks" : tracks, "artists" : artists}
 }
 
 async function remove_tracks_from_playlist(playlist_id, trackids_to_remove){
