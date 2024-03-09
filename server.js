@@ -31,6 +31,8 @@ app.get('/tracks', authenticate.tracks);
 
 app.get('/test', authenticate.test);
 
+app.delete('/remove_tracks', authenticate.remove_tracks);
+
 
 app.get('/auth/token', authenticate.get_token);
 app.listen(8000, () => {

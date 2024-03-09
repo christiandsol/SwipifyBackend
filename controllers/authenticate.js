@@ -145,6 +145,18 @@ export const tracks = async (req, res) => {
     }
 }
 
+export const remove_tracks = async (req, res) => {
+    try{
+        let idsToDelete = req.query.track_ids.split(',');
+        let playlist_id = req.query.playlist_id;
+        let response = await remove_tracks_from_playlist(playlist_id, idsToDelete);
+        res.json(response.status);
+    } 
+    catch (error){
+        console.log("ERROR DELETING TRACKS: " + error);
+    }
+}
+
 export const test = async (req, res) => {
     try{
         // let x = await get_tracks_and_artists_from_playlist('0A0X9EeB29iwpAd7Pat5Ae');
@@ -263,9 +275,9 @@ async function remove_tracks_from_playlist(playlist_id, trackids_to_remove){
             'snapshot_id': playlist.snapshot_id
     }});
 
-    console.log(response);
-
     await get_playlists();  //call get playlists again to update playlist data
+
+    return response;
 }
 
 function sort_tracks_by_artist(tracks, artist_id){
